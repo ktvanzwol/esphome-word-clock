@@ -1,0 +1,196 @@
+esphome:
+  name: word-clock
+  friendly_name: Word Clock
+  comment: DIY Word Clock 
+  includes:
+    - word-clock.h
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+  level: DEBUG
+  baud_rate: 0
+
+#debug:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: NNiHyKTvDcnl1b+J3BsFU7sg+SbJjkhY9PJFlcicQUk=
+  # password: !secret "api_password"
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid_iot
+  password: !secret wifi_password_iot
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Word-Clock Hotspot"
+    password: !secret wifi_password_iot
+
+captive_portal:
+
+button:
+  - platform: restart
+    name: "Reboot"
+
+web_server:
+  port: 80
+  local: True
+  ota: False
+
+# SNTP based time
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: "Europe/Amsterdam"
+
+# Wifi info (IP and Mac Address)
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: IP
+      icon: mdi:ip-network-outline
+      entity_category: diagnostic
+      disabled_by_default: True
+    ssid:
+      name: Wifi SSID
+      icon: mdi:access-point-network
+      entity_category: diagnostic
+      disabled_by_default: True
+    mac_address:
+      name: Mac Address
+      icon: mdi:network-outline
+      entity_category: diagnostic
+      disabled_by_default: True
+
+# Wifi siganl strength
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 60s
+    entity_category: diagnostic
+    disabled_by_default: True
+  - platform: internal_temperature
+    name: "ESP32 Temperature"
+
+light:
+  # 4 LEDs used for the minute dots display
+  - platform: neopixelbus
+    type: GRB
+    pin: GPIO25
+    num_leds: 4
+    variant: 800KBPS
+    method: ESP32_I2S_0
+    restore_mode: ALWAYS_OFF
+    id: neopixel_dots
+    
+  # 110 LEDs used for text display
+  - platform: neopixelbus
+    type: GRB
+    pin: GPIO26
+    num_leds: 110
+    variant: 800KBPS
+    method: ESP32_I2S_1
+    restore_mode: ALWAYS_OFF
+    id: neopixel_text
+  
+  # RGB light for controlling clock face from Home Assistant
+  # using template outputs attached to globals
+  - platform: rgb
+    name: "Word Clock"
+    id: word_clock_light
+    red: virtual_red_output
+    green: virtual_green_output
+    blue: virtual_blue_output
+    default_transition_length: 0s
+    restore_mode: RESTORE_DEFAULT_OFF
+    effects:
+      - lambda:
+          name: "Daily Color Cycle"
+          update_interval: 1s
+          # Call EffectDailyColorCycle() function in word-clock.h
+          lambda: "EffectDailyColorCycle();"
+      - lambda:
+          name: "Hourly Color Cycle"
+          update_interval: 1s
+          # Call EffectHourlyColorCycle() function in word-clock.h
+          lambda: "EffectHourlyColorCycle();"
+      - lambda:
+          name: "Minute Color Cycle"
+          update_interval: 1s
+          # Call EffectMinuteColorCycle() function in word-clock.h
+          lambda: "EffectMinuteColorCycle();"
+
+display:
+  # Minute dots display
+  - platform: addressable_light
+    id: dots
+    addressable_light_id: neopixel_dots
+    width: 4
+    height: 1
+    rotation: 180°
+    update_interval: 20ms
+    # Call UpdateMinuteDots() function in word-clock.h
+    lambda: "UpdateMinuteDots(it);"
+
+  # Text Display
+  - platform: addressable_light
+    id: letters
+    addressable_light_id: neopixel_text
+    width: 11
+    height: 10
+    rotation: 0°
+    update_interval: 20ms
+    # Call MapLetterPixel() function in word-clock.h
+    pixel_mapper: "return MapLetterPixel(x, y);"
+    # Call UpdateText() function in word-clock.h
+    lambda: "UpdateText(it);"
+
+# Virtual outputs for RGB light
+# updates are writen to globels
+output:
+  - platform: template
+    id: virtual_red_output
+    type: float
+    write_action:
+      - globals.set:
+          id: red_value
+          value: !lambda return state;
+  - platform: template
+    id: virtual_green_output
+    type: float
+    write_action:
+      - globals.set:
+          id: green_value
+          value: !lambda return state;
+  - platform: template
+    id: virtual_blue_output
+    type: float
+    write_action:
+      - globals.set:
+          id: blue_value
+          value: !lambda return state;
+
+# Globals used for RGB colors
+globals:
+  - id: red_value
+    type: float
+    restore_value: on
+    initial_value: '0'
+  - id: green_value
+    type: float
+    restore_value: on
+    initial_value: '0'
+  - id: blue_value
+    type: float
+    restore_value: on
+    initial_value: '0'
