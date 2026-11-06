@@ -1,0 +1,124 @@
+esphome:
+  name: word-clock-native-test
+
+host:
+
+logger:
+  level: WARN
+
+external_components:
+  - source:
+      type: local
+      path: ../components
+    components: [word_clock]
+  - source:
+      type: local
+      path: components
+    components: [clock_test]
+
+time:
+  - platform: clock_test
+    id: test_time
+    timezone: UTC
+
+light:
+  - platform: clock_test
+    id: matrix_light
+    num_leds: 110
+    internal: true
+    gamma_correct: 1.0
+    restore_mode: ALWAYS_OFF
+  - platform: clock_test
+    id: dots_light
+    num_leds: 4
+    internal: true
+    gamma_correct: 1.0
+    restore_mode: ALWAYS_OFF
+  - platform: clock_test
+    id: only_matrix_light
+    num_leds: 110
+    internal: true
+    gamma_correct: 1.0
+    restore_mode: ALWAYS_OFF
+  - platform: clock_test
+    id: failed_matrix_light
+    num_leds: 110
+    actual_leds: 109
+    default_transition_length: 0s
+    internal: true
+    gamma_correct: 1.0
+    restore_mode: ALWAYS_OFF
+  - platform: word_clock
+    id: clock_light
+    output_id: clock_output
+    name: Clock
+    time_id: test_time
+    matrix_display_id: matrix
+    dots_display_id: dots
+    gamma_correct: 1.0
+    default_transition_length: 0s
+    restore_mode: ALWAYS_OFF
+    effects:
+      - word_clock_color_cycle:
+          name: Daily
+          time_id: test_time
+          period: daily
+      - word_clock_color_cycle:
+          name: Hourly
+          time_id: test_time
+          period: hourly
+      - word_clock_color_cycle:
+          name: Minute
+          time_id: test_time
+          period: minute
+  - platform: word_clock
+    id: matrix_only_light
+    output_id: matrix_only_output
+    name: Matrix Only
+    time_id: test_time
+    matrix_display_id: only_matrix
+    default_transition_length: 0s
+    restore_mode: ALWAYS_OFF
+  - platform: word_clock
+    id: failed_clock_light
+    output_id: failed_clock_output
+    name: Failed Capacity Test
+    time_id: test_time
+    matrix_display_id: failed_matrix
+    restore_mode: ALWAYS_OFF
+
+display:
+  - platform: addressable_light
+    id: matrix
+    addressable_light_id: matrix_light
+    width: 11
+    height: 10
+  - platform: addressable_light
+    id: dots
+    addressable_light_id: dots_light
+    width: 4
+    height: 1
+    rotation: 180
+  - platform: addressable_light
+    id: only_matrix
+    addressable_light_id: only_matrix_light
+    width: 11
+    height: 10
+    pixel_mapper: return y * 11 + 10 - x;
+  - platform: addressable_light
+    id: failed_matrix
+    addressable_light_id: failed_matrix_light
+    width: 11
+    height: 10
+
+clock_test:
+  clock_id: clock_output
+  matrix_only_clock_id: matrix_only_output
+  light_id: clock_light
+  matrix_only_light_id: matrix_only_light
+  time_id: test_time
+  matrix_id: matrix
+  dots_id: dots
+  matrix_only_display_id: only_matrix
+  failed_clock_id: failed_clock_output
+  failed_display_id: failed_matrix

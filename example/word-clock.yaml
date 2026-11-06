@@ -1,0 +1,112 @@
+esphome:
+  name: word-clock
+  friendly_name: Word Clock
+  comment: DIY Word Clock 
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+  level: DEBUG
+  baud_rate: 0
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: <your_encryption_key>
+
+ota:
+  - platform: esphome
+    password: <your_ota_password>
+
+wifi:
+  ssid: <your_wifi_ssid>
+  password: <your_wifi_password>
+
+  ap:
+    ssid: "Word-Clock Hotspot"
+    password: <your_wifi_password>
+
+captive_portal:
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/ktvanzwol/esphome-word-clock
+      ref: main
+    components: [word_clock]
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: "Europe/Amsterdam"
+
+light:
+  # 4 LEDs used for the minute dots display
+  - platform: esp32_rmt_led_strip
+    channel_colors: GRB
+    pin: GPIO25
+    num_leds: 4
+    chipset: WS2812
+    internal: true
+    gamma_correct: 1.0
+    restore_mode: ALWAYS_OFF
+    id: neopixel_dots
+    
+  # 110 LEDs used for text display
+  - platform: esp32_rmt_led_strip
+    channel_colors: GRB
+    pin: GPIO26
+    num_leds: 110
+    chipset: WS2812
+    internal: true
+    gamma_correct: 1.0
+    restore_mode: ALWAYS_OFF
+    id: neopixel_text
+  
+  # The only light exposed to Home Assistant.
+  - platform: word_clock
+    name: "Word Clock"
+    id: word_clock_light
+    time_id: sntp_time
+    matrix_display_id: letters
+    dots_display_id: dots
+    default_transition_length: 0s
+    restore_mode: RESTORE_DEFAULT_OFF
+    effects:
+      - word_clock_color_cycle:
+          name: "Daily Color Cycle"
+          time_id: sntp_time
+          period: daily
+      - word_clock_color_cycle:
+          name: "Hourly Color Cycle"
+          time_id: sntp_time
+          period: hourly
+      - word_clock_color_cycle:
+          name: "Minute Color Cycle"
+          time_id: sntp_time
+          period: minute
+
+display:
+  # Minute dots display
+  - platform: addressable_light
+    id: dots
+    addressable_light_id: neopixel_dots
+    width: 4
+    height: 1
+    rotation: 180°
+
+  # Text Display
+  - platform: addressable_light
+    id: letters
+    addressable_light_id: neopixel_text
+    width: 11
+    height: 10
+    rotation: 0°
+    # Wiring-specific mapping belongs to ESPHome, not the word clock.
+    pixel_mapper: |-
+      const int32_t row = 9 - y;
+      return row * 11 + (row % 2 == 0 ? x : 10 - x);

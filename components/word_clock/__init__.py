@@ -1,0 +1,1 @@
+DOMAIN = "word_clock"
