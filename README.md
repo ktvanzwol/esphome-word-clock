@@ -62,7 +62,7 @@ Color cycles are separate native `LightEffect` objects, not rendering callbacks.
 
 - [dutch_clock_test.cpp](tests/dutch_clock_test.cpp) checks all daily phrases, remainders, and the literal face layout.
 - [host.yaml](tests/host.yaml) and [clock_test](tests/components/clock_test/) exercise the real ESPHome light/display APIs with an in-memory addressable output and controlled time. They cover native transitions, mapping/rotation, gamma, all cycle periods, optional dots, unchanged frames, and runtime capacity failure without hardware.
-- [validate.py](tests/validate.py) stages disposable configurations, checks negative schemas, and optionally builds/runs native tests and both ESP32 firmware variants.
+- [validate.py](tests/validate.py) stages disposable configurations, checks negative schemas, and optionally builds/runs native tests and both ESP32 firmware variants. It validates [word-clock.yaml](tests/word-clock.yaml), a self-contained copy of the example that uses local components and dummy values, so validation does not depend on the user-facing example's placeholders.
 
 ## Validation without flashing
 
@@ -73,6 +73,6 @@ wslc run --rm ghcr.io/esphome/esphome:2026.10.2 version
 wslc run --rm --entrypoint python --mount 'type=bind,source=C:\Git\esphome-word-clock,target=/repo,readonly' ghcr.io/esphome/esphome:2026.10.2 /repo/tests/validate.py --work /tmp/word-clock-validation --compile
 ```
 
-Adjust the Windows host path to your checkout. The runner stages sources and placeholder secrets outside the checkout, tests all 1,440 daily phrases and negative schemas, runs native ESPHome runtime assertions, and validates/builds both the example and matrix-only variant. Omit `--compile` for configuration/code-generation checks only, or use `--native` to also run native tests without building ESP32 firmware. No command uploads or flashes firmware.
+Adjust the Windows host path to your checkout. The runner stages sources outside the checkout, tests all 1,440 daily phrases and negative schemas, runs native ESPHome runtime assertions, and validates/builds both the test configuration and matrix-only variant. Omit `--compile` for configuration/code-generation checks only, or use `--native` to also run native tests without building ESP32 firmware. No command uploads or flashes firmware.
 
 The native tests deliberately log a failed capacity check to verify fail-safe behavior; that error is expected.

@@ -9,13 +9,6 @@ import subprocess
 import yaml
 
 
-class ExampleLoader(yaml.SafeLoader):
-    pass
-
-
-ExampleLoader.add_constructor("!secret", lambda loader, node: "validation-only")
-
-
 def run_cli(config: Path, command: str, work: Path, generate: bool = False) -> subprocess.CompletedProcess:
     args = ["esphome", command, str(config)]
     if generate:
@@ -42,16 +35,6 @@ def main() -> None:
     work.mkdir(parents=True, exist_ok=True)
     for directory in ("components", "example", "tests"):
         shutil.copytree(source / directory, work / directory, dirs_exist_ok=True, ignore=shutil.ignore_patterns("__pycache__"))
-    (work / "example" / "secrets.yaml").write_text(
-        "ota_password: validation-only\nwifi_ssid_iot: validation-only\nwifi_password_iot: validation-only\n"
-    )
-    example_source = work / "example" / "word-clock.yaml"
-    example_config = yaml.load(example_source.read_text(), Loader=ExampleLoader)
-    example_config["external_components"][0]["source"] = {
-        "type": "local",
-        "path": "../components",
-    }
-    example_source.write_text(yaml.safe_dump(example_config, sort_keys=False))
     subprocess.run(
         ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror", str(work / "tests" / "dutch_clock_test.cpp"),
          str(work / "components" / "word_clock" / "dutch_clock.cpp"), "-o", str(work / "dutch-clock-test")],
@@ -59,9 +42,9 @@ def main() -> None:
     )
     subprocess.run([str(work / "dutch-clock-test")], check=True)
 
-    example = example_source
+    example = work / "tests" / "word-clock.yaml"
     require_success(run_cli(example, "compile", work, generate=True), "full example configuration and code generation")
-    data = yaml.load(example.read_text(), Loader=ExampleLoader)
+    data = yaml.safe_load(example.read_text())
     matrix_only = copy.deepcopy(data)
     matrix_only["esphome"]["name"] = "word-clock-matrix-only"
     del matrix_only["light"][2]["dots_display_id"]
