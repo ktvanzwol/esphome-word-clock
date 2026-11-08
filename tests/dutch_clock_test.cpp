@@ -4,6 +4,7 @@
 #include <cctype>
 #include <iostream>
 #include <string>
+#include <array>
 
 using namespace esphome::word_clock;
 
