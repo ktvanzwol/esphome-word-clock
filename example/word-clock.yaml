@@ -97,7 +97,7 @@ display:
     addressable_light_id: neopixel_dots
     width: 4
     height: 1
-    rotation: 180°
+    rotation: 180
 
   # Text Display
   - platform: addressable_light
@@ -105,7 +105,7 @@ display:
     addressable_light_id: neopixel_text
     width: 11
     height: 10
-    rotation: 0°
+    rotation: 0
     # Wiring-specific mapping belongs to ESPHome, not the word clock.
     pixel_mapper: |-
       const int32_t row = 9 - y;
