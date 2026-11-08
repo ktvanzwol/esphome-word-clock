@@ -17,6 +17,10 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+      - name: Test CI download configuration
+        run: python -m unittest discover -s tests -p test_ci_validation.py
       - name: Run validation
-        run: python tests/validate.py --work /tmp/word-clock-validation --compile
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python .github/scripts/validate.py

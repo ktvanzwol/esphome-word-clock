@@ -33,13 +33,29 @@ void WordClock::setup() {
     this->matrix_->stop_poller();
   if (this->dots_ != nullptr)
     this->dots_->stop_poller();
-  if (this->clock_ == nullptr || this->state_ == nullptr || this->matrix_ == nullptr ||
-      this->matrix_light_ == nullptr || this->matrix_->get_width() != 11 || this->matrix_->get_height() != 10 ||
-      this->matrix_->get_light() == nullptr || this->matrix_->get_light()->size() < 110 ||
-      (this->dots_ != nullptr && (this->dots_light_ == nullptr || this->dots_->get_width() != 4 ||
-                                this->dots_->get_height() != 1 || this->dots_->get_light() == nullptr ||
-                                this->dots_->get_light()->size() < 4))) {
-    ESP_LOGE(TAG, "Invalid word clock display or backing light configuration");
+  const char *error = nullptr;
+  if (this->clock_ == nullptr)
+    error = "time source is missing";
+  else if (this->state_ == nullptr)
+    error = "RGB light state is missing";
+  else if (this->matrix_ == nullptr)
+    error = "matrix display is missing";
+  else if (this->matrix_light_ == nullptr || this->matrix_->get_light() == nullptr)
+    error = "matrix backing light is missing";
+  else if (this->matrix_->get_width() != 11 || this->matrix_->get_height() != 10)
+    error = "matrix display must have logical dimensions 11x10";
+  else if (this->matrix_->get_light()->size() < 110)
+    error = "matrix backing light has fewer than 110 LEDs";
+  else if (this->dots_ != nullptr && this->dots_light_ == nullptr)
+    error = "minute-dots backing light is missing";
+  else if (this->dots_ != nullptr && this->dots_->get_light() == nullptr)
+    error = "minute-dots display has no addressable light";
+  else if (this->dots_ != nullptr && (this->dots_->get_width() != 4 || this->dots_->get_height() != 1))
+    error = "minute-dots display must have logical dimensions 4x1";
+  else if (this->dots_ != nullptr && this->dots_->get_light()->size() < 4)
+    error = "minute-dots backing light has fewer than 4 LEDs";
+  if (error != nullptr) {
+    ESP_LOGE(TAG, "Invalid word clock configuration: %s", error);
     this->mark_failed();
     return;
   }

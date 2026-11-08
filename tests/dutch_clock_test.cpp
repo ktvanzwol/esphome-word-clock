@@ -46,7 +46,8 @@ int main() {
     if (expected == "tienuur") expected = "tien";
     if (expected == "over2") expected = "over";
     if (expected == "voor2") expected = "voor";
-    for (char &character : expected) character = static_cast<char>(std::toupper(character));
+    for (char &character : expected)
+      character = static_cast<char>(std::toupper(static_cast<unsigned char>(character)));
     assert(face[span.y].substr(span.x, span.length) == expected);
   }
   std::cout << "PASS: all 1440 daily phrases, minute remainders, and Dutch face spans\n";

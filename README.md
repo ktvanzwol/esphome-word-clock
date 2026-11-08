@@ -76,3 +76,5 @@ wslc run --rm --entrypoint python --mount 'type=bind,source=C:\Git\esphome-word-
 Adjust the Windows host path to your checkout. The runner stages sources outside the checkout, tests all 1,440 daily phrases and negative schemas, runs native ESPHome runtime assertions, and validates/builds both the test configuration and matrix-only variant. Omit `--compile` for configuration/code-generation checks only, or use `--native` to also run native tests without building ESP32 firmware. No command uploads or flashes firmware.
 
 The native tests deliberately log a failed capacity check to verify fail-safe behavior; that error is expected.
+
+The GitHub Actions validation uses the GitHub release asset API for ESPHome's recommended ESP-IDF archive and Espressif's official tool mirror. This avoids transient failures from GitHub release download URLs while keeping both firmware builds required.

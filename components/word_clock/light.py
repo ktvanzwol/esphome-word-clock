@@ -111,7 +111,12 @@ def validate_display(config: ConfigType, key: str, width: int, height: int) -> N
         owners[resource] = (str(config[CONF_OUTPUT_ID]), key)
 
     for other in full_config.get("display", []):
-        if other[CONF_ID] != config[key] and other.get(CONF_ADDRESSABLE_LIGHT_ID) == backing_id:
+        other_id = other.get(CONF_ID)
+        if (
+            other_id is not None
+            and other_id != config[key]
+            and other.get(CONF_ADDRESSABLE_LIGHT_ID) == backing_id
+        ):
             raise cv.Invalid("Backing light is already used by another display", [key])
 
 
@@ -141,6 +146,11 @@ async def to_code(config: ConfigType) -> None:
     ):
         if key in config:
             display = await cg.get_variable(config[key])
-            configured_display = next(item for item in CORE.config["display"] if item[CONF_ID] == config[key])
+            configured_display = next(
+                (item for item in CORE.config["display"] if item.get(CONF_ID) == config[key]),
+                None,
+            )
+            if configured_display is None:
+                raise cv.Invalid(f"display {config[key]} not found in display:")
             backing = await cg.get_variable(configured_display[CONF_ADDRESSABLE_LIGHT_ID])
             cg.add(setter(display, backing))
